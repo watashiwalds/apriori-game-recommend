@@ -7,4 +7,3 @@ if __name__ == '__main__':
     insert_data(game_csv, 'Game')
     insert_data(library_csv, 'Library')
     print('DONE')
-    
