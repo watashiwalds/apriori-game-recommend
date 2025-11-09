@@ -17,8 +17,13 @@ def preprocess(input_path:str):
         .rename(columns={'value': 'avg_playtime'})
     )
 
-    game_playtime['game_id'] = np.arange(1, len(game_playtime) + 1)
-    game_df = game_playtime[['game_id', 'game_title', 'avg_playtime']]
+    df_purchase = df[df['behavior'] == 'purchase']
+    all_games = pd.DataFrame(df_purchase['game_title'].unique(),columns=['game_title'])
+    full_game_df = all_games.merge(game_playtime, on='game_title', how='left')
+    full_game_df['avg_playtime'] = full_game_df['avg_playtime'].fillna(0)
+
+    full_game_df['game_id'] = np.arange(1,len(full_game_df)+1)
+    game_df = full_game_df[['game_id', 'game_title', 'avg_playtime']]
 
     df_purchase = df[df['behavior'] == 'purchase']
     merged = df_purchase.merge(game_df, on='game_title', how='inner')
