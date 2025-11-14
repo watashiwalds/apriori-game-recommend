@@ -1,4 +1,5 @@
 import json
+import os
 
 from flask import jsonify
 from sqlalchemy import create_engine, MetaData, Table, text, select
@@ -10,7 +11,7 @@ class SteamGame():
             if engine:
                 self.engine = engine
             else:
-                server = 'DESKTOP-PIULBJ0\\SQLEXPRESS'
+                server = os.getenv("SQL_SERVER")
                 database = 'SteamGameRec'
                 driver = 'ODBC Driver 17 for SQL Server'
                 conn_str = f'mssql+pyodbc://@{server}/{database}?trusted_connection=yes&driver={driver}'
