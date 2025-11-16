@@ -98,9 +98,9 @@ const GameSearch = () => {
       <h1 className="text-center font-bold mb-4">Apriori Game Recommended</h1>
 
       <CCard className="p-4 mb-4 shadow-lg rounded-2xl">
-        <CForm className="row g-3 align-items-end">
+        <CForm className="row g-3 align-items-end d-flex">
           {/* Search Game Input */}
-          <CCol md={5} className="position-relative">
+          <CCol md={12} lg={5} className="flex-grow-1">
             <CFormInput
               label="Tìm kiếm game"
               placeholder="Nhập game cần tìm kiếm..."
@@ -138,13 +138,13 @@ const GameSearch = () => {
           </CCol>
 
           {/* Duration Input */}
-          <CCol md={3}>
+          <CCol md={12} lg={2} className="flex-grow-1">
             <CFormInput
               type="number"
               step="0.01"
               min="0"
-              label="Thời lượng chơi (VD: 123.40 giờ)"
-              placeholder="Nhập thời lượng chơi mong muốn..."
+              label="Thời lượng chơi"
+              placeholder="123,45"
               value={duration}
               onChange={(e) => {
                 const val = parseFloat(e.target.value)
@@ -154,17 +154,18 @@ const GameSearch = () => {
           </CCol>
 
           {/* Add Game Button */}
-          <CCol md={2} className="d-flex align-items-end">
+          <CCol md={6} lg={2} className="d-flex justify-content-end">
             <CButton color="info" className="text-white w-100 shadow-sm" onClick={handleAddGame}>
               Thêm trò chơi
             </CButton>
           </CCol>
 
           {/* Find Recommend Button */}
-          <CCol md={2} className="d-flex align-items-end">
+          <CCol md={6} lg={3} className="d-flex justify-content-end">
             <CButton
               color="success"
               className="text-white w-100 d-flex justify-content-center align-items-center gap-2 shadow-sm"
+              style={{ whiteSpace: 'nowrap' }}
               onClick={handleFindRecommendGames}
               disabled={loading}
             >
@@ -197,28 +198,36 @@ const GameSearch = () => {
             <CTableRow>
               <CTableHeaderCell scope="col">Tên trò chơi</CTableHeaderCell>
               <CTableHeaderCell scope="col">Thời lượng chơi</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Steam?</CTableHeaderCell>
+              <CTableHeaderCell scope="col">Tìm trên Steam?</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {recommendGames.map((game, index) => (
-              <CTableRow key={index} className="hover:bg-gray-50 transition-colors duration-200">
-                <CTableDataCell className="font-medium">{game.gameTitle}</CTableDataCell>
-                <CTableDataCell className="text-gray-600">Placeholder</CTableDataCell>
-                <CTableDataCell>
-                  <a
-                    href={`https://store.steampowered.com/search/?term=${encodeURIComponent(
-                      game.gameTitle,
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline font-medium"
-                  >
-                    Steam
-                  </a>
+            {recommendGames.length > 0 ? (
+              recommendGames.map((game, index) => (
+                <CTableRow key={index} className="hover:bg-gray-50 transition-colors duration-200">
+                  <CTableDataCell className="font-medium">{game.gameTitle}</CTableDataCell>
+                  <CTableDataCell className="text-gray-600">_</CTableDataCell>
+                  <CTableDataCell>
+                    <a
+                      href={`https://store.steampowered.com/search/?term=${encodeURIComponent(
+                        game.gameTitle,
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline font-medium"
+                    >
+                      Steam
+                    </a>
+                  </CTableDataCell>
+                </CTableRow>
+              ))
+            ) : (
+              <CTableRow>
+                <CTableDataCell colSpan={3} className="text-center text-gray-500 py-4">
+                  Không tìm thấy trò chơi phù hợp
                 </CTableDataCell>
               </CTableRow>
-            ))}
+            )}
           </CTableBody>
         </CTable>
       </CCard>
