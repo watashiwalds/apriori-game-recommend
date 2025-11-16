@@ -2,7 +2,9 @@ from flask import Flask, request, jsonify
 from Apriori import get_recommendations_interactive
 from Apriori_new import recomment_game
 from Game_Model import SteamGame
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3636"])
 
 steam_Game = SteamGame()
 

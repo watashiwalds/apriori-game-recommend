@@ -1,6 +1,6 @@
 import { CButton } from '@coreui/react'
 
-export const SelectedItem = ({ index, gameName, duration, dispatch }) => {
+export const SelectedItem = ({ index, gameName, duration, onDelete }) => {
   return (
     <span
       style={{
@@ -32,7 +32,7 @@ export const SelectedItem = ({ index, gameName, duration, dispatch }) => {
           padding: '0 6px',
           textDecoration: 'none',
         }}
-        onClick={() => dispatch({ type: 'DELETE_SELECTED_GAME', payload: index })}
+        onClick={onDelete}
       >
         ×
       </CButton>

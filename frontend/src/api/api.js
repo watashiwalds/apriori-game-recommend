@@ -1,25 +1,24 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8888',
+  baseURL: 'http://localhost:5000',
   timeout: 3000,
 })
 
-const database = ['Blood Strike', 'Apex Legends', 'Crab Game', 'Blood Hunt', 'Vampire Survivors']
-const getGames = (text, excludedGames) => {
-  return database
-    .filter((game) => !excludedGames.includes(game))
-    .filter((game) => game.toLowerCase().includes(text.toLowerCase()))
-}
-
-const findGames = async (keyword) => {
-  const res = await api.get('/all_games', { params: { keyword } })
+const searchGame = async (name) => {
+  const res = await api.get('/search_game', { params: { name } })
+  console.log(res)
   return res.data
 }
 
-const getSimilarGames = async (game) => {
-  const res = await api.get('/all_games', { params: { game } })
+const getRecommendGames = async (gameIds) => {
+  const res = await api.post('/recomment', { id_game: gameIds })
   return res.data
 }
 
-export { findGames, getGames, getSimilarGames, database }
+const getGameByIds = async (ids) => {
+  const res = await api.post('/get_games_by_ids', { ids: ids })
+  return res.data
+}
+
+export { searchGame, getRecommendGames, getGameByIds }

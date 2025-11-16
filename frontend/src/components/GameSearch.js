@@ -6,6 +6,7 @@ import {
   CFormInput,
   CListGroup,
   CListGroupItem,
+  CSpinner,
   CTable,
   CTableBody,
   CTableDataCell,
@@ -14,46 +15,32 @@ import {
   CTableRow,
 } from '@coreui/react'
 import { useCallback, useState } from 'react'
-import { findGames } from '../api/api'
+import { getGameByIds, getRecommendGames, searchGame } from '../api/api'
 import debounce from 'lodash.debounce'
-
-const similarGamesPlaceholder = [
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Apex Legends', time: 123 },
-  { name: 'Crab Game', time: 123 },
-  { name: 'Blood Hunt', time: 12.3 },
-  { name: 'Vampire Survivors', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-  { name: 'Blood Strike', time: 12.3 },
-]
+import { SelectedItem } from './SelectedItem'
 
 const GameSearch = () => {
+  // =========VARIABLES=========
   const [game, setGame] = useState('')
   const [duration, setDuration] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [filteredGames, setFilteredGames] = useState([])
-  const [similarGames, setSimilarGames] = useState([])
+  const [filteredGameIndex, setfilteredGameIndex] = useState(-1)
+  const [recommendGames, setRecommendGames] = useState([])
+  const [selectedGames, setSelectedGames] = useState([])
+  const [loading, setLoading] = useState(false)
 
+  // =========REACT HOOKS=========
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debounceSearch = useCallback(
     debounce(async (value) => {
       console.log('Searching for: ', value)
-      // call api
       try {
-        const data = await findGames(value)
-        setFilteredGames(data)
+        const res = await searchGame(value)
+        setFilteredGames(res.data.slice(0, 50))
       } catch (error) {
         console.error(error)
+        setFilteredGames([])
       }
     }, 500),
     [],
@@ -61,59 +48,96 @@ const GameSearch = () => {
 
   const handleChangeGame = (text) => {
     setGame(text)
-    debounceSearch(text)
+    setfilteredGameIndex(-1)
+    if (text.length > 0) {
+      setShowDropdown(true)
+      debounceSearch(text)
+    } else {
+      setShowDropdown(false)
+    }
   }
 
-  const handleFindSimilarGames = () => {}
+  const handleClickItemDropdown = (index) => {
+    setShowDropdown(false)
+    setGame(filteredGames[index].game_title)
+    setfilteredGameIndex(index)
+  }
 
+  const handleAddGame = () => {
+    if (filteredGameIndex === -1) {
+      alert('Vui lòng nhập tên game hợp lệ!')
+      return
+    }
+    const newValue = {
+      gameId: filteredGames[filteredGameIndex].game_id,
+      gameTitle: filteredGames[filteredGameIndex].game_title,
+      duration: duration,
+    }
+    setSelectedGames((prev) => [...prev, newValue])
+  }
+  const handleFindRecommendGames = async () => {
+    try {
+      setLoading(true)
+      const inputGameIds = selectedGames.map((g) => g.gameId)
+      console.log(inputGameIds)
+      const outputGameIds = await getRecommendGames(inputGameIds)
+      const res = await getGameByIds(outputGameIds)
+      const nomalizeData = res.data.map((g) => ({ gameId: g.game_id, gameTitle: g.game_title }))
+      setRecommendGames(nomalizeData)
+    } catch (err) {
+      console.error(err)
+      setRecommendGames([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // =========UI=========
   return (
     <>
       <h1 className="text-center font-bold mb-4">Apriori Game Recommended</h1>
 
-      <CCard className="p-4 mb-4 shadow-sm rounded-lg">
+      <CCard className="p-4 mb-4 shadow-lg rounded-2xl">
         <CForm className="row g-3 align-items-end">
+          {/* Search Game Input */}
           <CCol md={5} className="position-relative">
-            <div style={{ position: 'relative' }}>
-              <CFormInput
-                label="Tìm kiếm game"
-                placeholder="Nhập game cần tìm kiếm..."
-                value={game}
-                onChange={(e) => handleChangeGame(e.target.value)}
-                onFocus={() => setShowDropdown(game.length > 0)}
-                onBlur={() => setTimeout(() => setShowDropdown(game.length > 0), 150)}
-              />
-
-              {showDropdown && filteredGames.length > 0 && (
-                <CListGroup
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    zIndex: 1000,
-                    maxHeight: 150,
-                    overflowY: 'auto',
-                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                  }}
-                >
-                  {filteredGames.map((game) => (
-                    <CListGroupItem
-                      key={game}
-                      onClick={() => {
-                        setGame(game)
-                        setShowDropdown(false)
-                      }}
-                      style={{ cursor: 'pointer' }}
-                      className="hover:bg-blue-50"
-                    >
-                      {game}
-                    </CListGroupItem>
-                  ))}
-                </CListGroup>
-              )}
-            </div>
+            <CFormInput
+              label="Tìm kiếm game"
+              placeholder="Nhập game cần tìm kiếm..."
+              value={game}
+              onChange={(e) => handleChangeGame(e.target.value)}
+              onFocus={() => setShowDropdown(game.length > 0)}
+              onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+            />
+            {showDropdown && filteredGames.length > 0 && (
+              <CListGroup
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 9999,
+                  maxHeight: 300,
+                  overflowY: 'auto',
+                  boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+                  borderRadius: '0 0 0.5rem 0.5rem',
+                }}
+              >
+                {filteredGames.map((game, index) => (
+                  <CListGroupItem
+                    key={index}
+                    onClick={() => handleClickItemDropdown(index)}
+                    style={{ cursor: 'pointer' }}
+                    className="hover:bg-blue-50"
+                  >
+                    {game.game_title}
+                  </CListGroupItem>
+                ))}
+              </CListGroup>
+            )}
           </CCol>
 
+          {/* Duration Input */}
           <CCol md={3}>
             <CFormInput
               type="number"
@@ -129,46 +153,47 @@ const GameSearch = () => {
             />
           </CCol>
 
+          {/* Add Game Button */}
           <CCol md={2} className="d-flex align-items-end">
-            <CButton
-              color="info"
-              className="text-white w-100"
-              onClick={() => handleFindSimilarGames()}
-            >
-              Tìm trò chơi tương tự
+            <CButton color="info" className="text-white w-100 shadow-sm" onClick={handleAddGame}>
+              Thêm trò chơi
             </CButton>
           </CCol>
+
+          {/* Find Recommend Button */}
           <CCol md={2} className="d-flex align-items-end">
             <CButton
-              color="info"
-              className="text-white w-100"
-              onClick={() => handleFindSimilarGames()}
+              color="success"
+              className="text-white w-100 d-flex justify-content-center align-items-center gap-2 shadow-sm"
+              onClick={handleFindRecommendGames}
+              disabled={loading}
             >
+              {loading && <CSpinner color="light" size="sm" />}
               Tìm trò chơi tương tự
             </CButton>
           </CCol>
         </CForm>
-        <div style={{ marginTop: 16 }}>
-          {selectedGames.map((game) => (
-            <span
-              key={game}
-              style={{
-                display: 'inline-block',
-                background: '#eee',
-                padding: '4px 8px',
-                margin: 4,
-                borderRadius: 4,
-              }}
-            >
-              {game}
-            </span>
+
+        {/* Selected Games List */}
+        <div className="mt-4 flex flex-col gap-2">
+          {selectedGames.map((game, index) => (
+            <SelectedItem
+              key={index}
+              index={index}
+              gameName={game.gameTitle}
+              duration={game.duration}
+              onDelete={() => setSelectedGames((prev) => prev.filter((_, i) => i !== index))}
+            />
           ))}
         </div>
       </CCard>
 
-      <CCard className="p-3" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+      <CCard
+        className="p-4 mb-4 shadow-lg rounded-xl"
+        style={{ maxHeight: '500px', overflowY: 'auto' }}
+      >
         <CTable striped hover responsive>
-          <CTableHead className="sticky-top bg-white shadow-sm">
+          <CTableHead className="sticky top-0 bg-white shadow-sm">
             <CTableRow>
               <CTableHeaderCell scope="col">Tên trò chơi</CTableHeaderCell>
               <CTableHeaderCell scope="col">Thời lượng chơi</CTableHeaderCell>
@@ -176,14 +201,14 @@ const GameSearch = () => {
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {similarGamesPlaceholder.map((game, index) => (
-              <CTableRow key={index} className="hover:bg-gray-50 transition-colors">
-                <CTableDataCell className="font-medium">{game.name}</CTableDataCell>
-                <CTableDataCell>{game.time}</CTableDataCell>
+            {recommendGames.map((game, index) => (
+              <CTableRow key={index} className="hover:bg-gray-50 transition-colors duration-200">
+                <CTableDataCell className="font-medium">{game.gameTitle}</CTableDataCell>
+                <CTableDataCell className="text-gray-600">Placeholder</CTableDataCell>
                 <CTableDataCell>
                   <a
                     href={`https://store.steampowered.com/search/?term=${encodeURIComponent(
-                      game.name,
+                      game.gameTitle,
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
