@@ -64,7 +64,7 @@ const GameSearch = () => {
     debounceSearch(text)
   }
 
-  const handleFindSimilarGames = () => { }
+  const handleFindSimilarGames = () => {}
 
   return (
     <>
@@ -72,7 +72,7 @@ const GameSearch = () => {
 
       <CCard className="p-4 mb-4 shadow-sm rounded-lg">
         <CForm className="row g-3 align-items-end">
-          <CCol md={7} className="position-relative">
+          <CCol md={5} className="position-relative">
             <div style={{ position: 'relative' }}>
               <CFormInput
                 label="Tìm kiếm game"
@@ -138,7 +138,32 @@ const GameSearch = () => {
               Tìm trò chơi tương tự
             </CButton>
           </CCol>
+          <CCol md={2} className="d-flex align-items-end">
+            <CButton
+              color="info"
+              className="text-white w-100"
+              onClick={() => handleFindSimilarGames()}
+            >
+              Tìm trò chơi tương tự
+            </CButton>
+          </CCol>
         </CForm>
+        <div style={{ marginTop: 16 }}>
+          {selectedGames.map((game) => (
+            <span
+              key={game}
+              style={{
+                display: 'inline-block',
+                background: '#eee',
+                padding: '4px 8px',
+                margin: 4,
+                borderRadius: 4,
+              }}
+            >
+              {game}
+            </span>
+          ))}
+        </div>
       </CCard>
 
       <CCard className="p-3" style={{ maxHeight: '500px', overflowY: 'auto' }}>
