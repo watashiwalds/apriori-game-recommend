@@ -25,7 +25,6 @@ def preprocess(input_path:str):
     full_game_df['game_id'] = np.arange(1,len(full_game_df)+1)
     game_df = full_game_df[['game_id', 'game_title', 'avg_playtime']]
 
-    df_purchase = df[df['behavior'] == 'purchase']
     merged = df_purchase.merge(game_df, on='game_title', how='inner')
 
     library_df = (
