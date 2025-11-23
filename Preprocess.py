@@ -9,7 +9,6 @@ def preprocess(input_path:str):
     df['game_title'] = df['game_title'].str.strip()
 
     df_play = df[df['behavior'] == 'play']
-
     game_playtime = (
         df_play.groupby('game_title')['value']
         .mean()
@@ -21,12 +20,10 @@ def preprocess(input_path:str):
     all_games = pd.DataFrame(df_purchase['game_title'].unique(),columns=['game_title'])
     full_game_df = all_games.merge(game_playtime, on='game_title', how='left')
     full_game_df['avg_playtime'] = full_game_df['avg_playtime'].fillna(0)
-
     full_game_df['game_id'] = np.arange(1,len(full_game_df)+1)
     game_df = full_game_df[['game_id', 'game_title', 'avg_playtime']]
 
     merged = df_purchase.merge(game_df, on='game_title', how='inner')
-
     library_df = (
         merged.groupby('user_id')['game_id']
         .apply(list)
