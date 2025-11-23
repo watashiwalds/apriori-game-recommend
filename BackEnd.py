@@ -21,7 +21,7 @@ def recomment():
     data = request.json
     game_id = data['id_game']
     game_recomment = recomment_game(game_id,5)
-    return jsonify(game_recomment.tolist())
+    return jsonify(game_recomment)
 
 
 @app.route('/get_games_by_ids', methods=['POST'])
