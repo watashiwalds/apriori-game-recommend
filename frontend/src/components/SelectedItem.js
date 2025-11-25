@@ -1,6 +1,6 @@
 import { CButton } from '@coreui/react'
 
-export const SelectedItem = ({ index, gameName, duration, onDelete }) => {
+export const SelectedItem = ({ index, gameName, onDelete }) => {
   return (
     <span
       style={{
@@ -16,10 +16,6 @@ export const SelectedItem = ({ index, gameName, duration, onDelete }) => {
       }}
     >
       <span style={{ fontWeight: 500 }}>{gameName}</span>
-
-      {duration && (
-        <span style={{ fontSize: '0.8rem', color: '#888', marginLeft: '6px' }}>({duration}h)</span>
-      )}
 
       <CButton
         color="link"

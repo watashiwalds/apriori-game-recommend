@@ -4,6 +4,7 @@ import {
   CCol,
   CForm,
   CFormInput,
+  CInputGroup,
   CListGroup,
   CListGroupItem,
   CSpinner,
@@ -13,22 +14,42 @@ import {
   CTableHead,
   CTableHeaderCell,
   CTableRow,
+  CToast,
+  CToastBody,
+  CToaster,
+  CToastHeader,
 } from '@coreui/react'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { getGameByIds, getRecommendGames, searchGame } from '../api/api'
 import debounce from 'lodash.debounce'
 import { SelectedItem } from './SelectedItem'
+
+const NotiToast = ({ outlineColor = 'primary', title = 'Notification', message = '' }) => {
+  return (
+    <CToast className={`border border-${outlineColor}`}>
+      <CToastHeader closeButton>
+        <strong className="me-auto">{title}</strong>
+      </CToastHeader>
+      <CToastBody>{message}</CToastBody>
+    </CToast>
+  )
+}
 
 const GameSearch = () => {
   // =========VARIABLES=========
   const [game, setGame] = useState('')
   const [duration, setDuration] = useState('')
+  const [checked, setChecked] = useState(true)
   const [showDropdown, setShowDropdown] = useState(false)
   const [filteredGames, setFilteredGames] = useState([])
   const [filteredGameIndex, setfilteredGameIndex] = useState(-1)
   const [recommendGames, setRecommendGames] = useState([])
   const [selectedGames, setSelectedGames] = useState([])
   const [loading, setLoading] = useState(false)
+
+  const [toast, addToast] = useState()
+  const toaster = useRef()
+  // const [showToast, ToastContainer] = useToast()
 
   // =========REACT HOOKS=========
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,13 +86,18 @@ const GameSearch = () => {
 
   const handleAddGame = () => {
     if (filteredGameIndex === -1) {
-      alert('Vui lòng nhập tên game hợp lệ!')
+      addToast(
+        NotiToast({
+          outlineColor: 'danger',
+          title: 'Kiểm tra lại tên game!',
+          message: 'Vui lòng nhập tên game hợp lệ!',
+        }),
+      )
       return
     }
     const newValue = {
       gameId: filteredGames[filteredGameIndex].game_id,
       gameTitle: filteredGames[filteredGameIndex].game_title,
-      duration: duration,
     }
     setSelectedGames((prev) => [...prev, newValue])
   }
@@ -80,7 +106,7 @@ const GameSearch = () => {
       setLoading(true)
       const inputGameIds = selectedGames.map((g) => g.gameId)
       console.log(inputGameIds)
-      const outputGameIds = await getRecommendGames(inputGameIds)
+      const outputGameIds = await getRecommendGames(inputGameIds, duration, checked ? 1 : 0)
       const res = await getGameByIds(outputGameIds)
       const nomalizeData = res.data.map((g) => ({ gameId: g.game_id, gameTitle: g.game_title }))
       setRecommendGames(nomalizeData)
@@ -137,31 +163,40 @@ const GameSearch = () => {
             )}
           </CCol>
 
-          {/* Duration Input */}
-          <CCol md={12} lg={2} className="flex-grow-1">
-            <CFormInput
-              type="number"
-              step="0.01"
-              min="0"
-              label="Thời lượng chơi"
-              placeholder="123,45"
-              value={duration}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value)
-                if (val >= 0) setDuration(e.target.value)
-              }}
-            />
-          </CCol>
-
           {/* Add Game Button */}
-          <CCol md={6} lg={2} className="d-flex justify-content-end">
+          <CCol md={12} lg={2} className="d-flex justify-content-end">
             <CButton color="info" className="text-white w-100 shadow-sm" onClick={handleAddGame}>
               Thêm trò chơi
             </CButton>
           </CCol>
 
+          {/* Duration Input */}
+          <CCol md={12} lg={3} className="flex-grow-1">
+            <CInputGroup>
+              <CButton
+                type="button"
+                color="secondary"
+                variant="outline"
+                onClick={() => setChecked(!checked)}
+              >
+                {checked ? '>=' : '<='}
+              </CButton>
+              <CFormInput
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Thời lượng chơi mong muốn"
+                value={duration}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value)
+                  if (val >= 0) setDuration(e.target.value)
+                }}
+              />
+            </CInputGroup>
+          </CCol>
+
           {/* Find Recommend Button */}
-          <CCol md={6} lg={3} className="d-flex justify-content-end">
+          <CCol md={12} lg={2} className="d-flex justify-content-end">
             <CButton
               color="success"
               className="text-white w-100 d-flex justify-content-center align-items-center gap-2 shadow-sm"
@@ -170,19 +205,18 @@ const GameSearch = () => {
               disabled={loading}
             >
               {loading && <CSpinner color="light" size="sm" />}
-              Tìm trò chơi tương tự
+              Gợi ý game cho tôi
             </CButton>
           </CCol>
         </CForm>
 
         {/* Selected Games List */}
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-4 flex gap-2">
           {selectedGames.map((game, index) => (
             <SelectedItem
               key={index}
               index={index}
               gameName={game.gameTitle}
-              duration={game.duration}
               onDelete={() => setSelectedGames((prev) => prev.filter((_, i) => i !== index))}
             />
           ))}
@@ -197,7 +231,6 @@ const GameSearch = () => {
           <CTableHead className="sticky top-0 bg-white shadow-sm">
             <CTableRow>
               <CTableHeaderCell scope="col">Tên trò chơi</CTableHeaderCell>
-              <CTableHeaderCell scope="col">Thời lượng chơi</CTableHeaderCell>
               <CTableHeaderCell scope="col">Tìm trên Steam?</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
@@ -206,7 +239,6 @@ const GameSearch = () => {
               recommendGames.map((game, index) => (
                 <CTableRow key={index} className="hover:bg-gray-50 transition-colors duration-200">
                   <CTableDataCell className="font-medium">{game.gameTitle}</CTableDataCell>
-                  <CTableDataCell className="text-gray-600">_</CTableDataCell>
                   <CTableDataCell>
                     <a
                       href={`https://store.steampowered.com/search/?term=${encodeURIComponent(
@@ -224,13 +256,14 @@ const GameSearch = () => {
             ) : (
               <CTableRow>
                 <CTableDataCell colSpan={3} className="text-center text-gray-500 py-4">
-                  Không tìm thấy trò chơi phù hợp
+                  Không tìm thấy trò chơi phù hợp, hãy thêm/bớt trò chơi trong danh sách
                 </CTableDataCell>
               </CTableRow>
             )}
           </CTableBody>
         </CTable>
       </CCard>
+      <CToaster className="p-3" placement="top-end" push={toast} ref={toaster} />
     </>
   )
 }
