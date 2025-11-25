@@ -7,12 +7,17 @@ const api = axios.create({
 
 const searchGame = async (name) => {
   const res = await api.get('/search_game', { params: { name } })
-  console.log(res)
+  // console.log(res)
   return res.data
 }
 
-const getRecommendGames = async (gameIds) => {
-  const res = await api.post('/recomment', { id_game: gameIds })
+const getRecommendGames = async (gameIds, wantedPlaytime, isGreater) => {
+  const res = await api.post('/recomment', {
+    id_game: gameIds,
+    time: wantedPlaytime,
+    check: isGreater,
+  })
+  // console.log(res)
   return res.data
 }
 
