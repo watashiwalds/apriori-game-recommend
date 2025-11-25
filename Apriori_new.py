@@ -72,5 +72,33 @@ def recommend_game(game, top_n):
     return result['game'].tolist()
 
 
+def game_filter_time(game_list, time_limit, check):
+    if not game_list:
+        return []
+
+    playtime_map = dict(zip(game_table["game_id"], game_table["avg_playtime"]))
+
+    game_prioritize = []
+    game_remain = []
+
+    for game in game_list:
+        p_time = playtime_map.get(game)
+
+        if p_time is not None:
+            if check == 0:
+                if p_time < time_limit:
+                    game_prioritize.append(game)
+                else:
+                    game_remain.append(game)
+            elif check == 1:
+                if p_time >= time_limit:
+                    game_prioritize.append(game)
+                else:
+                    game_remain.append(game)
+        else:
+            game_remain.append(game)
+
+    return game_prioritize + game_remain
+
 
 
