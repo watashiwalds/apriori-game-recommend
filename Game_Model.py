@@ -70,13 +70,11 @@ class SteamGame():
                 result = conn.execute(stmt).fetchall()
 
                 if result:
-                    games = []
-                    for row in result:
-                        game_id, game_title = row
-                        games.append({
-                            "game_id": game_id,
-                            "game_title": game_title
-                        })
+                    result_dict = {row.game_id: row.game_title for row in result}
+                    games = [
+                        {"game_id": gid, "game_title": result_dict.get(gid)}
+                        for gid in id_list if gid in result_dict
+                    ]
                     return jsonify({"data": games}), 200
                 else:
                     return jsonify({"message": "Không tìm thấy game nào với các ID đã cho!"}), 404
