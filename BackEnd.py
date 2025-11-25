@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
-from Apriori import get_recommendations_interactive
-from Apriori_new import recomment_game
+from Apriori_new import recommend_game, game_filter_time
 from Game_Model import SteamGame
+from flask_cors import CORS
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:3636"])
 
 steam_Game = SteamGame()
 
@@ -17,9 +18,17 @@ def get_game_id(id):
 @app.route('/recomment', methods=['POST'])
 def recomment():
     data = request.json
-    game_id = data['id_game']
-    game_recomment = recomment_game(game_id,5)
-    return jsonify(game_recomment.tolist())
+    raw_id = data.get('id_game')
+    if isinstance(raw_id, list):
+        game_id_list = raw_id
+    else:
+        game_id_list = [raw_id]
+
+    playtime_wanted = float(data.get('time', 0))
+    checkbox = int(data.get('check', 0))
+    game_recommend = recommend_game(game_id_list, 20)
+    final_list = game_filter_time(game_recommend, playtime_wanted, checkbox)
+    return jsonify(final_list)
 
 
 @app.route('/get_games_by_ids', methods=['POST'])

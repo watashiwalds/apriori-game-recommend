@@ -108,3 +108,4 @@ class SteamGame():
                     return jsonify({"message": f"Không tìm thấy game nào phù hợp với từ khóa: '{search_term}'"}), 404
         except Exception as e:
             return jsonify({"error": f"Query failed: {e}"}), 500
+

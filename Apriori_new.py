@@ -19,7 +19,9 @@ print(df_encoded.head())
 
 frequent_itemsets = apriori(df_encoded, min_support=0.02, use_colnames=True)
 
-rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+# rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.1)
+
 rules = rules.sort_values(['lift', 'confidence'], ascending=False)
 
 print(frequent_itemsets)
@@ -54,8 +56,49 @@ def recommend_game_apriori(owned_game, rules, top_n = 5):
     rec_df = rec_df.sort_values(['match_count','confidence','lift'], ascending=False).drop_duplicates('game')
     return rec_df.head(top_n)
 
-def recomment_game(game, top_n):
-    return recommend_game_apriori(game, rules, top_n)['game']
+def recommend_game(game, top_n):
+    result = recommend_game_apriori(game, rules, top_n)
+    print(result)
+
+    if result is None or result.empty:
+        return []
+
+    if 'game' not in result.columns:
+        return []
+
+    if len(result['game']) == 0:
+        return []
+
+    return result['game'].tolist()
+
+
+def game_filter_time(game_list, time_limit, check):
+    if not game_list:
+        return []
+
+    playtime_map = dict(zip(game_table["game_id"], game_table["avg_playtime"]))
+
+    game_prioritize = []
+    game_remain = []
+
+    for game in game_list:
+        p_time = playtime_map.get(game)
+
+        if p_time is not None:
+            if check == 0:
+                if p_time < time_limit:
+                    game_prioritize.append(game)
+                else:
+                    game_remain.append(game)
+            elif check == 1:
+                if p_time >= time_limit:
+                    game_prioritize.append(game)
+                else:
+                    game_remain.append(game)
+        else:
+            game_remain.append(game)
+
+    return game_prioritize + game_remain
 
 
 
