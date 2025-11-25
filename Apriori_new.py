@@ -17,9 +17,11 @@ te_fit = te.fit(transactions).transform(transactions)
 df_encoded = pd.DataFrame(te_fit, columns=te.columns_)
 print(df_encoded.head())
 
-frequent_itemsets = apriori(df_encoded, min_support=0.005, use_colnames=True)
+frequent_itemsets = apriori(df_encoded, min_support=0.02, use_colnames=True)
 
-rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+# rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
+rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.1)
+
 rules = rules.sort_values(['lift', 'confidence'], ascending=False)
 
 print(frequent_itemsets)
@@ -54,25 +56,20 @@ def recommend_game_apriori(owned_game, rules, top_n = 5):
     rec_df = rec_df.sort_values(['match_count','confidence','lift'], ascending=False).drop_duplicates('game')
     return rec_df.head(top_n)
 
-
-def recomment_game(game, top_n):
+def recommend_game(game, top_n):
     result = recommend_game_apriori(game, rules, top_n)
     print(result)
 
-    # result là None hoặc DataFrame rỗng
     if result is None or result.empty:
         return []
 
-    # không có cột 'game'
     if 'game' not in result.columns:
         return []
 
-    # danh sách game rỗng
     if len(result['game']) == 0:
         return []
 
     return result['game'].tolist()
-
 
 
 
