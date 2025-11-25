@@ -25,7 +25,7 @@ def recomment():
         game_id_list = [raw_id]
 
     playtime_wanted = float(data.get('time', 0))
-    checkbox = int(data.get('check', 0))
+    checkbox = int(data.get('check', 1))
     game_recommend = recommend_game(game_id_list, 20)
     final_list = game_filter_time(game_recommend, playtime_wanted, checkbox)
     return jsonify(final_list)
