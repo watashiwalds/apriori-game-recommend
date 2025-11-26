@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
-from Apriori_new import recommend_game, game_filter_time
+# from Apriori_new import recommend_game, game_filter_time
+from Back import recommend_game, game_filter_time
 from Game_Model import SteamGame
 from flask_cors import CORS
 app = Flask(__name__)
@@ -29,7 +30,6 @@ def recomment():
     game_recommend = recommend_game(game_id_list, 20)
     final_list = game_filter_time(game_recommend, playtime_wanted, checkbox)
     return jsonify(final_list)
-
 
 @app.route('/get_games_by_ids', methods=['POST'])
 def get_games_by_ids():

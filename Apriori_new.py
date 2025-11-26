@@ -17,44 +17,42 @@ te_fit = te.fit(transactions).transform(transactions)
 df_encoded = pd.DataFrame(te_fit, columns=te.columns_)
 print(df_encoded.head())
 
-frequent_itemsets = apriori(df_encoded, min_support=0.02, use_colnames=True)
+frequent_itemsets = apriori(df_encoded, min_support=0.01, use_colnames=True)
 
-# rules = association_rules(frequent_itemsets, metric="lift", min_threshold=1)
-rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.1)
+rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=0.35)
 
 rules = rules.sort_values(['lift', 'confidence'], ascending=False)
 
 print(frequent_itemsets)
 print(rules[["antecedents", "consequents", "support", "confidence", "lift"]])
 
-def recommend_game_apriori(owned_game, rules, top_n = 5):
+
+def recommend_game_apriori(owned_game, rules, top_n=5):
     owned_set = set(owned_game)
-    recommendations = []
-    for idx, rule in rules.iterrows():
-        antecedents = rule['antecedents']
-        consequents = rule['consequents']
-        match_count = len(antecedents.intersection(owned_set))
-        if match_count>0:
-            # print(antecedents)
-            for game in consequents:
-                # print(game)
-                if game not in owned_set:
-                    # print("own:",game)
-                    recommendations.append({
-                        'game': game,
-                        'match_count':match_count,
-                        'based_on': list(antecedents),
-                        'confidence': rule['confidence'],
-                        'lift': rule['lift'],
-                        'support': rule['support']
-                    })
-    # print(recommendations)
-    if not recommendations:
+
+    rules['match_count'] = rules['antecedents'].apply(lambda x: len(x.intersection(owned_set)))
+    valid_rules = rules[rules['match_count'] > 0].copy()
+    # input_set = frozenset(owned_game)
+    # valid_rules = rules[rules['antecedents'] == input_set].copy()
+
+    if valid_rules.empty:
         return pd.DataFrame()
 
-    rec_df = pd.DataFrame(recommendations)
-    rec_df = rec_df.sort_values(['match_count','confidence','lift'], ascending=False).drop_duplicates('game')
-    return rec_df.head(top_n)
+    recommendations = valid_rules.explode('consequents')
+    recommendations = recommendations.rename(columns={'consequents': 'game'})
+    recommendations = recommendations[~recommendations['game'].isin(owned_set)]
+
+    if recommendations.empty:
+        return pd.DataFrame()
+
+    recommendations['based_on'] = recommendations['antecedents'].apply(list)
+
+    cols = ['game', 'match_count', 'based_on', 'confidence', 'lift', 'support']
+    final_df = recommendations[cols]
+    final_df = final_df.sort_values(['match_count', 'confidence', 'lift'],ascending=False)
+    final_df = final_df.drop_duplicates(subset='game')
+
+    return final_df.head(top_n)
 
 def recommend_game(game, top_n):
     result = recommend_game_apriori(game, rules, top_n)
@@ -99,6 +97,3 @@ def game_filter_time(game_list, time_limit, check):
             game_remain.append(game)
 
     return game_prioritize + game_remain
-
-
-
